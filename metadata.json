@@ -1,0 +1,6 @@
+{
+  "name": "Arrow Vale: Roguelite Arena",
+  "description": "Arrow Vale: The Syndicate Wars – A mobile-style mafia roguelite action shooter with stop-to-shoot combat, live multiplayer, crime families, mafia ranks, turf wars, co-op raid bosses, procedural audio, and deep skill synergies.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
