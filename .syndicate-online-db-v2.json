@@ -1,0 +1,116 @@
+{
+  "schemaVersion": 2,
+  "users": {},
+  "families": [],
+  "turfWars": [
+    {
+      "id": "turf_docks",
+      "name": "Little Italy Docks",
+      "controllingFamilyId": "",
+      "controlPct": 0,
+      "bonusDesc": "+4% Syndicate Cash Skim",
+      "dangerLevel": "Tier I Racket"
+    },
+    {
+      "id": "turf_speakeasy",
+      "name": "Bronzeville Speakeasy Strip",
+      "controllingFamilyId": "",
+      "controlPct": 0,
+      "bonusDesc": "+3% Firearm Fire Rate",
+      "dangerLevel": "Tier II Racket"
+    },
+    {
+      "id": "turf_railyard",
+      "name": "Hell's Kitchen Freight Yards",
+      "controllingFamilyId": "",
+      "controlPct": 0,
+      "bonusDesc": "+4% Kevlar Armor Integrity",
+      "dangerLevel": "Tier III Racket"
+    },
+    {
+      "id": "turf_casino",
+      "name": "Grand Casino Promenade",
+      "controllingFamilyId": "",
+      "controlPct": 0,
+      "bonusDesc": "+3% Deadeye Crit Impact",
+      "dangerLevel": "Tier IV Racket"
+    },
+    {
+      "id": "turf_vaults",
+      "name": "Federal Reserve Vault Row",
+      "controllingFamilyId": "",
+      "controlPct": 0,
+      "bonusDesc": "+5% Underboss Bounty",
+      "dangerLevel": "Tier V Racket"
+    }
+  ],
+  "raidBoss": {
+    "id": "raid_boss_1",
+    "name": "DON CASTELLANO'S ARMORED DREADNOUGHT",
+    "title": "Commission Raid Boss · Tier I",
+    "hp": 250000,
+    "maxHp": 250000,
+    "tier": 1,
+    "rewardGold": 600,
+    "rewardGems": 45,
+    "topContributors": {}
+  },
+  "chatHistory": [],
+  "metaBalance": {
+    "seasonNote": "Commission Equilibrium Engine v4.0: All 7 Syndicate weapons are calibrated to 100% baseline DPS parity. Live telemetry dynamically tunes multipliers between 0.92x and 1.12x as runs are completed.",
+    "weaponMultipliers": {
+      "bow": 1,
+      "chakram": 1,
+      "crossbow": 1,
+      "staff": 1,
+      "s_weapon_tommy": 1,
+      "weapon_vendetta": 1,
+      "weapon_viper_duals": 1
+    },
+    "weaponStats": {
+      "bow": {
+        "picks": 0,
+        "wins": 0,
+        "totalStages": 0
+      },
+      "chakram": {
+        "picks": 0,
+        "wins": 0,
+        "totalStages": 0
+      },
+      "crossbow": {
+        "picks": 0,
+        "wins": 0,
+        "totalStages": 0
+      },
+      "staff": {
+        "picks": 0,
+        "wins": 0,
+        "totalStages": 0
+      },
+      "s_weapon_tommy": {
+        "picks": 0,
+        "wins": 0,
+        "totalStages": 0
+      },
+      "weapon_vendetta": {
+        "picks": 0,
+        "wins": 0,
+        "totalStages": 0
+      },
+      "weapon_viper_duals": {
+        "picks": 0,
+        "wins": 0,
+        "totalStages": 0
+      }
+    },
+    "skillPickCounts": {},
+    "diminishingReturnsInfo": "Stacking >4 identical projectile/elemental techniques triggers enemy Kevlar counter-plating (up to 14% adaptive resistance), ensuring no single skill stack can cheese the game.",
+    "skillRegulation": {
+      "projectileCapDamping": 0.82,
+      "attackSpeedSoftCap": 2.1,
+      "enemyAdaptiveArmor": 0.14
+    },
+    "lastUpdated": 1794333094905
+  }
+}

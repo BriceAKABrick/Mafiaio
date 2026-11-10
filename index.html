@@ -3059,7 +3059,7 @@
                 <div style="font-size:10px; color:#d6d3d1; font-weight:700;">Create your Hitman Name &amp; Password to enter the Online Syndicate</div>
               </div>
             </div>
-            <button class="modal-close-x" id="btn-close-auth-x" aria-label="Close" style="display:none;">&times;</button>
+            <button class="modal-close-x" id="btn-close-auth-x" aria-label="Close" style="display:flex;">&times;</button>
           </div>
 
           <div class="armory-tabs" style="margin-bottom:0; grid-template-columns: repeat(2, 1fr);">
@@ -3081,6 +3081,10 @@
 
           <button class="primary-btn" id="btn-auth-submit" style="width:100%; padding:11px 16px; font-size:13px;">
             Register Account &amp; Enter the Streets
+          </button>
+
+          <button class="coll-bar-btn" id="btn-auth-offline" type="button" style="width:100%; padding:9px 14px; font-size:11px; border-color:#d97706; color:#fde047; justify-content:center; background:rgba(217,119,6,0.12); margin-top:6px; cursor:pointer;">
+            🕶 Play Solo / Guest Mode (No Sign-In Required)
           </button>
 
           <div id="auth-current-user-row" style="display:none; justify-content:space-between; align-items:center; padding-top:4px; border-top:1px solid rgba(255,255,255,0.1); width:100%; font-size:11px; color:#d6d3d1;">
@@ -4660,8 +4664,13 @@
         return `${wsProto}//${window.location.host}/ws`;
       }
 
-      function apiFetch(path, options) {
-        return fetch(getApiEndpoint(path), options);
+      function apiFetch(path, options = {}) {
+        const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+        const timer = controller ? setTimeout(() => controller.abort(), 2500) : null;
+        const opts = controller ? { ...options, signal: controller.signal } : options;
+        return fetch(getApiEndpoint(path), opts).finally(() => {
+          if (timer) clearTimeout(timer);
+        });
       }
 
       // Authoritative Online Syndicate State synced from server.ts via WebSocket (/ws) & REST (/api/*)
@@ -10554,9 +10563,13 @@
             } catch {}
           });
 
+          ws.addEventListener('error', () => {
+            onlineState.connected = false;
+          });
+
           ws.addEventListener('close', () => {
             onlineState.connected = false;
-            setTimeout(connectOnlineSyndicate, 4500);
+            setTimeout(connectOnlineSyndicate, 10000);
           });
         } catch {}
       }
@@ -11441,6 +11454,34 @@
         if (errBox) errBox.textContent = '';
       }
 
+      function enterAsGuestOrOffline(customName) {
+        const chosenName = (customName || '').trim() || meta.playerName || ('HITMAN_' + Math.floor(100 + Math.random() * 900));
+        meta.playerName = chosenName;
+        if (!meta.authToken) {
+          meta.authToken = 'local_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7);
+        }
+        try {
+          const cached = localStorage.getItem('syndicate_beta_acct_' + chosenName.toLowerCase());
+          if (cached) {
+            const parsed = JSON.parse(cached);
+            applyParsedMetaObject(parsed);
+          }
+        } catch {}
+
+        ensureValidInventoryAndSlots();
+        saveMetaSave();
+        sfx.init();
+        sfx.playLevelUpFanfare();
+        showSynergyToast(`🕶 WELCOME TO THE STREETS, ${chosenName.toUpperCase()}! (OFFLINE DOSSIER)`);
+
+        if (authModal) authModal.classList.remove('active');
+        previousStateBeforeArmory = 'TITLE_MENU';
+        gameState = 'TITLE_MENU';
+        showExclusiveScreen(titleScreen);
+        syncBottomDockHighlight('btn-dock-campaign');
+        updateHUD();
+      }
+
       function openAuthModal(defaultMode) {
         sfx.init();
         if (defaultMode) setAuthTabMode(defaultMode);
@@ -11455,7 +11496,7 @@
         if (userInp) userInp.value = meta.playerName || '';
         if (passInp) passInp.value = '';
         const hasAccount = !!(meta.authToken && meta.playerName);
-        if (closeX) closeX.style.display = hasAccount ? 'flex' : 'none';
+        if (closeX) closeX.style.display = 'flex';
         if (statusRow) statusRow.style.display = hasAccount ? 'flex' : 'none';
         if (activeUserLbl) activeUserLbl.textContent = meta.playerName || '';
 
@@ -11486,7 +11527,10 @@
           return;
         }
         if (errBox) errBox.textContent = '';
-        if (submitBtn) submitBtn.disabled = true;
+        if (submitBtn) {
+          submitBtn.disabled = true;
+          submitBtn.textContent = 'Connecting...';
+        }
 
         const endpoint = activeAuthMode === 'login' ? '/api/auth/login' : '/api/auth/register';
         apiFetch(endpoint, {
@@ -11496,7 +11540,10 @@
         })
           .then(r => r.json())
           .then(res => {
-            if (submitBtn) submitBtn.disabled = false;
+            if (submitBtn) {
+              submitBtn.disabled = false;
+              submitBtn.textContent = activeAuthMode === 'register' ? 'Register Account & Enter the Streets' : 'Sign In & Enter the Streets';
+            }
             if (!res || !res.ok) {
               if (errBox) errBox.textContent = (res && res.error) ? res.error : 'Authentication failed. Check your credentials.';
               return;
@@ -11526,15 +11573,24 @@
             updateHUD();
           })
           .catch(err => {
-            console.error('Auth submit error:', err);
-            if (submitBtn) submitBtn.disabled = false;
-            if (errBox) errBox.textContent = 'Network error reaching the Commission Server.';
+            console.warn('Commission Server unreachable, falling back to local dossier:', err);
+            if (submitBtn) {
+              submitBtn.disabled = false;
+              submitBtn.textContent = activeAuthMode === 'register' ? 'Register Account & Enter the Streets' : 'Sign In & Enter the Streets';
+            }
+            // Auto fallback to local offline mode using the requested username so Itch.io and offline players are never trapped
+            enterAsGuestOrOffline(username);
           });
       }
 
       function initAuthSessionOnBoot() {
         if (!meta.authToken || !meta.playerName) {
           openAuthModal('register');
+          return;
+        }
+        // If it's a local/guest token, skip server authentication and launch straight to main menu
+        if (meta.authToken.startsWith('local_') || meta.authToken.startsWith('guest_')) {
+          if (authModal) authModal.classList.remove('active');
           return;
         }
         apiFetch('/api/auth/session', {
@@ -11552,20 +11608,13 @@
                 closeModalAndRestore();
               }
             } else {
-              meta.authToken = '';
-              meta.playerName = '';
-              meta.familyId = '';
-              saveMetaSave();
-              openAuthModal('login');
+              // Token invalid on server, keep local data active so player can still play
+              if (authModal) authModal.classList.remove('active');
             }
           })
           .catch(() => {
             // Keep local session active if network offline
-            if (meta.authToken && meta.playerName) {
-              if (authModal) authModal.classList.remove('active');
-            } else {
-              openAuthModal('register');
-            }
+            if (authModal) authModal.classList.remove('active');
           });
       }
 
@@ -11762,8 +11811,24 @@
       if (tabAuthLog) tabAuthLog.addEventListener('click', () => setAuthTabMode('login'));
       const btnAuthSubmit = document.getElementById('btn-auth-submit');
       if (btnAuthSubmit) btnAuthSubmit.addEventListener('click', submitAuthForm);
+      const btnAuthOffline = document.getElementById('btn-auth-offline');
+      if (btnAuthOffline) {
+        btnAuthOffline.addEventListener('click', () => {
+          const userInp = document.getElementById('auth-username-input');
+          const name = (userInp && userInp.value.trim()) || ('HITMAN_' + Math.floor(100 + Math.random() * 900));
+          enterAsGuestOrOffline(name);
+        });
+      }
       const btnCloseAuthX = document.getElementById('btn-close-auth-x');
-      if (btnCloseAuthX) btnCloseAuthX.addEventListener('click', closeModalAndRestore);
+      if (btnCloseAuthX) {
+        btnCloseAuthX.addEventListener('click', () => {
+          if (!meta.playerName) {
+            enterAsGuestOrOffline('HITMAN_' + Math.floor(100 + Math.random() * 900));
+          } else {
+            closeModalAndRestore();
+          }
+        });
+      }
       const authUserInp = document.getElementById('auth-username-input');
       const authPassInp = document.getElementById('auth-password-input');
       if (authUserInp) {
